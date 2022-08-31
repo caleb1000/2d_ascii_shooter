@@ -26,6 +26,7 @@ struct projectile{
     char type;
 };
 
+int level = 1;
 int score = 0;
 int static const max_board = 30;//max board screen
 int static const visable_board = 30; //the visable board size printed to screen
@@ -49,7 +50,7 @@ for(int z = 0; z < 6+(score/1000); z++){
     enemy enemy;
     enemy.pos_x = 15+3*z+z;
     enemy.pos_y = 13+2*z-z;
-    if(z%2 == 0){
+    if(z%2 == 0 && z<10){
         enemy.rate = 12;
         enemy.clock = 0;
         enemy.type = 'G';
@@ -64,7 +65,7 @@ for(int z = 0; z < 6+(score/1000); z++){
         enemy.d_list[7] = 'd';
         enemy.d_list[8] = 's';
     }
-    else{
+    else if (z%2 == 1 && z>=5){
         enemy.rate = 3;
         enemy.clock = 0;
         enemy.type = 'T';
@@ -78,6 +79,21 @@ for(int z = 0; z < 6+(score/1000); z++){
         enemy.d_list[6] = 'd';
         enemy.d_list[7] = 'z';
         enemy.d_list[8] = 's';
+    }
+    else{
+        enemy.rate = 10;
+        enemy.clock = 0;
+        enemy.type = 'M';
+        enemy.d_index = 2;
+        enemy.d_list[0] = 'w';
+        enemy.d_list[1] = 's';
+        enemy.d_list[2] = 'w';
+        enemy.d_list[3] = 's';
+        enemy.d_list[4] = 'w';
+        enemy.d_list[5] = 'w';
+        enemy.d_list[6] = 'w';
+        enemy.d_list[7] = 'a';
+        enemy.d_list[8] = 'a';
     }
     enemy.direction = enemy.d_list[enemy.d_index];
     enemies.push_back(enemy);
@@ -96,7 +112,7 @@ while(1){
                exit(0);
     }
     cout << "\033[2J\033[1;1H";
-    printf("Score: %d \n\r",score);
+    printf("Score: %d Level: %d\n\r",score, level);
     for(int i =0; i<visable_board; i++){
         printf("-");
     }
@@ -199,6 +215,7 @@ int main()
             player_y = 0;
             new_matrix[player_y][player_x]='X';
             populate_enemies();
+            level++;
         }
         cur = getch();
         int temp_score = 0;
@@ -302,7 +319,7 @@ for(int x = 0; x<flying.size(); x++){
            continue;
        }
 
-       if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' && flying.at(x).type != 'F' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' && flying.at(x).type != 'F'){
+       if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' && flying.at(x).type != 'F' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' && flying.at(x).type != 'F' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'M' && flying.at(x).type != 'F'){
                for(int y = 0; y<enemies.size(); y++){
                    if(enemies.at(y).pos_y == flying.at(x).pos_y && enemies.at(y).pos_x == flying.at(x).pos_x){
                        enemies.erase(enemies.begin() + y);
