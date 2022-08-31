@@ -9,10 +9,10 @@ for the current frame to be drawn and the next to be generated.
 
 ## Upcoming features: ##
 <br> -New user-input system <br />
-<br>              Currently taking in user-input only allows for one button to be pressed at a time. Most likely switching over to a <br/>
-<br>              more robust approach by reading the keyboard events rather than using stdin for user input <br />
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Currently taking in user-input only allows for one button to be pressed at a time. Most likely switching over to a <br/>
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; more robust approach by reading the keyboard events rather than using stdin for user input <br />
 <br> -Multiplayer <br />
-<br>              Use UDP client/server to connect two players <br />
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Use UDP client/server to connect two players <br />
 <br> -Enemy projectiles <br />
 <br> -Sound <br />
 <br> -Levels <br />
