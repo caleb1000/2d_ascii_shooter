@@ -43,6 +43,48 @@ char new_matrix[max_board][max_board];//new matrix that has yet to be printed to
 char cur_matrix[max_board][max_board];//current matrix being printed to screen
 bool player_dead = false;
 
+void populate_enemies(){
+
+for(int z = 0; z < 6+(score/1000); z++){
+    enemy enemy;
+    enemy.pos_x = 15+3*z+z;
+    enemy.pos_y = 13+2*z-z;
+    if(z%2 == 0){
+        enemy.rate = 12;
+        enemy.clock = 0;
+        enemy.type = 'G';
+        enemy.d_index = 0;
+        enemy.d_list[0] = 'd';
+        enemy.d_list[1] = 'd';
+        enemy.d_list[2] = 'd';
+        enemy.d_list[3] = 'w';
+        enemy.d_list[4] = 'd';
+        enemy.d_list[5] = 's';
+        enemy.d_list[6] = 'd';
+        enemy.d_list[7] = 'd';
+        enemy.d_list[8] = 's';
+    }
+    else{
+        enemy.rate = 3;
+        enemy.clock = 0;
+        enemy.type = 'T';
+        enemy.d_index = 2;
+        enemy.d_list[0] = 's';
+        enemy.d_list[1] = 'z';
+        enemy.d_list[2] = 'd';
+        enemy.d_list[3] = 'z';
+        enemy.d_list[4] = 'a';
+        enemy.d_list[5] = 'z';
+        enemy.d_list[6] = 'd';
+        enemy.d_list[7] = 'z';
+        enemy.d_list[8] = 's';
+    }
+    enemy.direction = enemy.d_list[enemy.d_index];
+    enemies.push_back(enemy);
+}
+
+}
+
 static void * draw(void *arg){
 
 while(1){
@@ -72,8 +114,11 @@ while(1){
             if(cur_matrix[x][y] == '0'){
                 cout << "\033[0;30m" << cur_matrix[x][y] << "\033[0m";
             }
-            else if(cur_matrix[x][y] == 'S'){
-                cout << "\033[0;34m" << cur_matrix[x][y] << "\033[0m";
+            else if(cur_matrix[x][y] == '.'){
+                cout << "\033[0;37m" << cur_matrix[x][y] << "\033[0m";
+            }
+            else if(cur_matrix[x][y] == 'o'){
+                cout << "\033[1;37m" << cur_matrix[x][y] << "\033[0m";
             }
             else if(cur_matrix[x][y] == 'X'){
                 cout << "\033[1;33m" << cur_matrix[x][y] << "\033[0m";
@@ -142,48 +187,19 @@ int main()
     curs_set(0);//make cursor invisable
 
 //populate enemy vector
-
-for(int z = 0; z < 9; z++){
-    enemy enemy;
-    enemy.pos_x = 15+3*z+z;
-    enemy.pos_y = 13+2*z-z;
-    if(z%2 == 0){
-        enemy.rate = 12;
-        enemy.clock = 0;
-        enemy.type = 'G';
-        enemy.d_index = 0;
-        enemy.d_list[0] = 'd';
-        enemy.d_list[1] = 'd';
-        enemy.d_list[2] = 'd';
-        enemy.d_list[3] = 'w';
-        enemy.d_list[4] = 'd';
-        enemy.d_list[5] = 's';
-        enemy.d_list[6] = 'd';
-        enemy.d_list[7] = 'd';
-        enemy.d_list[8] = 's';
-    }
-    else{
-        enemy.rate = 3;
-        enemy.clock = 0;
-        enemy.type = 'T';
-        enemy.d_index = 2;
-        enemy.d_list[0] = 's';
-        enemy.d_list[1] = 'a';
-        enemy.d_list[2] = 'd';
-        enemy.d_list[3] = 'z';
-        enemy.d_list[4] = 'z';
-        enemy.d_list[5] = 'z';
-        enemy.d_list[6] = 'd';
-        enemy.d_list[7] = 's';
-        enemy.d_list[8] = 's';
-    }
-    enemy.direction = enemy.d_list[enemy.d_index];
-    enemies.push_back(enemy);
-}
+    populate_enemies();
 
 
     //player input loop which writes to the new matrix
     while(1){
+        if(enemies.empty()){
+            score += 1000;
+            new_matrix[player_y][player_x]='0';
+            player_x = 0;
+            player_y = 0;
+            new_matrix[player_y][player_x]='X';
+            populate_enemies();
+        }
         cur = getch();
         int temp_score = 0;
         // Populate enemies, then flying vectors and finally the player before draw to screen
@@ -286,7 +302,7 @@ for(int x = 0; x<flying.size(); x++){
            continue;
        }
 
-       if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' && flying.at(x).type == 'S' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' && flying.at(x).type == 'S'){
+       if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' && flying.at(x).type != 'F' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' && flying.at(x).type != 'F'){
                for(int y = 0; y<enemies.size(); y++){
                    if(enemies.at(y).pos_y == flying.at(x).pos_y && enemies.at(y).pos_x == flying.at(x).pos_x){
                        enemies.erase(enemies.begin() + y);
@@ -357,8 +373,16 @@ for(int x = 0; x<flying.size(); x++){
             fire.direction = lastmov;
             fire.pos_x = player_x;
             fire.pos_y = player_y;
-            fire.type = 'S'; //Shoots a fash bullet
-            fire.rate = 1;//moves every 1 clock
+            fire.type = '.'; //Shoots a fash bullet
+            fire.rate = 4;
+            if(score > 4000){
+               fire.type = 'O';
+               fire.rate = 0;//moves every clock
+            }
+            else if(score >= 1000){
+               fire.type = 'o';
+               fire.rate = 2;//moves every 1 clock
+            }
             fire.clock =0;
             if(fire.direction == 'w'){
                 fire.pos_y--;
