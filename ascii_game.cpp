@@ -89,7 +89,7 @@ while(1){
             }
 
             else{
-                cout << "\033[1;30m" << cur_matrix[x][y] << "\033[0m";
+                cout << "\033[0;33m" << cur_matrix[x][y] << "\033[0m";
             }
         }
         printf("|\n\r");
@@ -295,7 +295,7 @@ for(int x = 0; x<flying.size(); x++){
                    }
                }
                //find and remove goblin or troll
-               new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = '0';
+               new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = '*';
                //file tile with empty space
                flying.erase(flying.begin() + x);
                //x--;
@@ -318,7 +318,6 @@ for(int x = 0; x<flying.size(); x++){
             if(player_y>0){
                 new_matrix[player_y][player_x] = '0';
                 player_y--;
-                new_matrix[player_y][player_x] ='X';
                 lastmov = 'w';
             }
         }
@@ -327,7 +326,6 @@ for(int x = 0; x<flying.size(); x++){
             if(player_x>0){
                 new_matrix[player_y][player_x] ='0';
                 player_x--;
-                new_matrix[player_y][player_x] ='X';
                 lastmov = 'a';
             }
         }
@@ -336,7 +334,6 @@ for(int x = 0; x<flying.size(); x++){
             if(player_y<max_board-1){
                 new_matrix[player_y][player_x] ='0';
                 player_y++;
-                new_matrix[player_y][player_x] ='X';
                 lastmov = 's';
             }
         }
@@ -344,13 +341,16 @@ for(int x = 0; x<flying.size(); x++){
             if(player_x<max_board-1){
                 new_matrix[player_y][player_x] ='0';
                 player_x++;
-                new_matrix[player_y][player_x] ='X';
                 lastmov = 'd';
             }
         }
-        else{
-            new_matrix[player_y][player_x] ='X';
+
+        if( new_matrix[player_y][player_x] == '*'){
+            score+=300;//if player collects gold from dead body
         }
+
+        new_matrix[player_y][player_x] ='X';
+
 
         if(cur == 'f'){
             projectile fire;
