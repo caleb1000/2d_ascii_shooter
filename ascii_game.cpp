@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <curses.h>
 #include <vector>
+#include <time.h>
+
 using namespace std;
 
 struct enemy{
@@ -46,11 +48,15 @@ bool player_dead = false;
 
 void populate_enemies(){
 
-for(int z = 0; z < 6+(score/1000); z++){
+srand (time(NULL));
+int random;
+
+for(int z = 0; z < 6+(level); z++){
     enemy enemy;
-    enemy.pos_x = 15+3*z+z;
-    enemy.pos_y = 13+2*z-z;
-    if(z%2 == 0 && z<10){
+    random = rand() % 5 + 1;
+    if(z%2 == 0 && z<9){
+        enemy.pos_x = 15+3*z+random;
+        enemy.pos_y = 13+2*z-random;
         enemy.rate = 12;
         enemy.clock = 0;
         enemy.type = 'G';
@@ -65,7 +71,9 @@ for(int z = 0; z < 6+(score/1000); z++){
         enemy.d_list[7] = 'd';
         enemy.d_list[8] = 's';
     }
-    else if (z%2 == 1 && z>=5){
+    else if (z%2 == 1 && z<9){
+        enemy.pos_x = 10+2*z+random;
+        enemy.pos_y = 18+z-random;
         enemy.rate = 3;
         enemy.clock = 0;
         enemy.type = 'T';
@@ -81,7 +89,9 @@ for(int z = 0; z < 6+(score/1000); z++){
         enemy.d_list[8] = 's';
     }
     else{
-        enemy.rate = 10;
+        enemy.pos_x = z+random+random;
+        enemy.pos_y = z+random+random;
+        enemy.rate = 2;
         enemy.clock = 0;
         enemy.type = 'M';
         enemy.d_index = 2;
@@ -274,7 +284,10 @@ for(int x =0; x<enemies.size(); x++){
             enemies.at(x).pos_y = enemies.at(x).pos_y;
         }
 
-        enemies.at(x).d_index++;
+        srand (time(NULL));
+        int random;
+        random = rand() % 2 + 1;
+        enemies.at(x).d_index = random + enemies.at(x).d_index;
         if(enemies.at(x).d_index >= 9){
             enemies.at(x).d_index = 0;
         }
@@ -392,11 +405,12 @@ for(int x = 0; x<flying.size(); x++){
             fire.pos_y = player_y;
             fire.type = '.'; //Shoots a fash bullet
             fire.rate = 4;
+
             if(score > 4000){
                fire.type = 'O';
                fire.rate = 0;//moves every clock
             }
-            else if(score >= 1000){
+            else if(score <= 4000 && score >= 1000){
                fire.type = 'o';
                fire.rate = 2;//moves every 1 clock
             }
