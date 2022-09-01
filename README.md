@@ -5,8 +5,7 @@ for the current frame to be drawn and the next to be generated.
 
 
 ## Game Screenshot! ##
-![image](https://user-images.githubusercontent.com/30327564/187813410-403bc450-d085-43a0-83e9-05a68102c4aa.png)
-
+![image](https://user-images.githubusercontent.com/30327564/187813467-ad48272e-865e-432b-a5d7-51ed37dd6930.png)
 
 ## Upcoming features: ##
 <br> -New user-input system <br />
