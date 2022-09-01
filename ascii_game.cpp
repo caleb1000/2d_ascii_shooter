@@ -44,6 +44,9 @@ bool drawn = true;//if drawn false we wait to update to new current
 
 char new_matrix[max_board][max_board];//new matrix that has yet to be printed to screen
 char cur_matrix[max_board][max_board];//current matrix being printed to screen
+
+int player_x = 0;
+int player_y = 0;
 bool player_dead = false;
 
 void populate_enemies(){
@@ -64,7 +67,7 @@ for(int z = 0; z < 6+(level); z++){
         enemy.d_list[0] = 'd';
         enemy.d_list[1] = 'd';
         enemy.d_list[2] = 'd';
-        enemy.d_list[3] = 'w';
+        enemy.d_list[3] = 's';
         enemy.d_list[4] = 'd';
         enemy.d_list[5] = 's';
         enemy.d_list[6] = 'd';
@@ -74,18 +77,18 @@ for(int z = 0; z < 6+(level); z++){
     else if (z%2 == 1 && z<9){
         enemy.pos_x = 10+2*z+random;
         enemy.pos_y = 18+z-random;
-        enemy.rate = 3;
+        enemy.rate = 16;
         enemy.clock = 0;
         enemy.type = 'T';
         enemy.d_index = 2;
         enemy.d_list[0] = 's';
-        enemy.d_list[1] = 'z';
-        enemy.d_list[2] = 'd';
-        enemy.d_list[3] = 'z';
+        enemy.d_list[1] = 's';
+        enemy.d_list[2] = 'a';
+        enemy.d_list[3] = 'd';
         enemy.d_list[4] = 'a';
-        enemy.d_list[5] = 'z';
-        enemy.d_list[6] = 'd';
-        enemy.d_list[7] = 'z';
+        enemy.d_list[5] = 'd';
+        enemy.d_list[6] = 's';
+        enemy.d_list[7] = 's';
         enemy.d_list[8] = 's';
     }
     else{
@@ -108,6 +111,140 @@ for(int z = 0; z < 6+(level); z++){
     enemy.direction = enemy.d_list[enemy.d_index];
     enemies.push_back(enemy);
 }
+}
+
+void move_projectiles(){
+
+for(int x = 0; x<flying.size(); x++){
+//write out projectiles to screen, if offscreen remove them from vector
+
+    if(flying.at(x).rate == flying.at(x).clock){
+        if(flying.at(x).pos_y != player_y || flying.at(x).pos_x != player_x){
+            new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] ='0';//set old position to 0
+        }
+        if(flying.at(x).direction == 'w'){
+            flying.at(x).pos_x = flying.at(x).pos_x;
+            flying.at(x).pos_y = flying.at(x).pos_y-1;
+        }
+        else if(flying.at(x).direction == 'a'){
+            flying.at(x).pos_x = flying.at(x).pos_x-1;
+            flying.at(x).pos_y = flying.at(x).pos_y;
+        }
+        else if(flying.at(x).direction == 's'){
+            flying.at(x).pos_x = flying.at(x).pos_x;
+            flying.at(x).pos_y = flying.at(x).pos_y+1;
+        }
+        else if(flying.at(x).direction == 'd'){
+            flying.at(x).pos_x = flying.at(x).pos_x+1;
+            flying.at(x).pos_y = flying.at(x).pos_y;
+        }
+
+       if(flying.at(x).pos_x < 0 || flying.at(x).pos_x > max_board-1 || flying.at(x).pos_y < 0 || flying.at(x).pos_y > max_board-1){
+           flying.erase(flying.begin() + x);
+           //x--;
+           continue;
+       }
+
+       if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'M'){
+               for(int y = 0; y<enemies.size(); y++){
+                   if(enemies.at(y).pos_y == flying.at(x).pos_y && enemies.at(y).pos_x == flying.at(x).pos_x){
+                       enemies.erase(enemies.begin() + y);
+                       score+=100;
+                       break;
+                   }
+               }
+               //find and remove goblin or troll
+               new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = '*';
+               //file tile with empty space
+               flying.erase(flying.begin() + x);
+               //x--;
+               //remove water from projectile vector
+               continue;
+       }
+
+       flying.at(x).clock = 0;//reset projectile clock
+       new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = flying.at(x).type;
+       }
+
+    else{
+        flying.at(x).clock++;
+    }
+}//end of copypaste
+}
+
+void move_enemies(){
+
+        // Populate enemies, then flying vectors and finally the player before draw to screen
+        // If enemy or enemy projectile touching player end game
+
+for(int x =0; x<enemies.size(); x++){
+        //if enemy on edge of screen
+        if(enemies.at(x).rate != enemies.at(x).clock){
+            enemies.at(x).clock++;
+            continue;
+        }
+        else{
+            enemies.at(x).clock = 0;
+        }
+        if(enemies.at(x).pos_x >= max_board-1 || enemies.at(x).pos_x <= 0 || enemies.at(x).pos_y <= 0 || enemies.at(x).pos_y >= max_board-1){
+            if(enemies.at(x).d_index >= 9){
+                enemies.at(x).d_index = 0;
+            }
+            enemies.at(x).direction = enemies.at(x).d_list[enemies.at(x).d_index];
+            enemies.at(x).d_index++;
+            new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = '0';
+
+            if(enemies.at(x).pos_y >= max_board-1){
+               enemies.at(x).pos_y = 1;
+            }
+            else if(enemies.at(x).pos_x >= max_board-1){
+               enemies.at(x).pos_x = 1;
+            }
+            else if(enemies.at(x).pos_y <= 0){
+               enemies.at(x).pos_y = max_board-2;
+            }
+            else if(enemies.at(x).pos_x <= 0){
+               enemies.at(x).pos_x = max_board-2;
+            }
+            new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = enemies.at(x).type;
+            continue; //this means we are in an invalid location currently means goblin with be stuck
+        }
+
+        new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = '0';
+
+        if(enemies.at(x).direction == 'w'){
+            enemies.at(x).pos_x = enemies.at(x).pos_x;
+            enemies.at(x).pos_y = enemies.at(x).pos_y-1;
+        }
+        else if(enemies.at(x).direction == 'a'){
+            enemies.at(x).pos_x = enemies.at(x).pos_x-1;
+            enemies.at(x).pos_y = enemies.at(x).pos_y;
+        }
+        else if(enemies.at(x).direction == 's'){
+            enemies.at(x).pos_x = enemies.at(x).pos_x;
+            enemies.at(x).pos_y = enemies.at(x).pos_y+1;
+        }
+        else if(enemies.at(x).direction == 'd'){
+            enemies.at(x).pos_x = enemies.at(x).pos_x+1;
+            enemies.at(x).pos_y = enemies.at(x).pos_y;
+        }
+
+        srand (time(NULL));
+        int random;
+        random = rand()%4;
+        enemies.at(x).d_index = random + enemies.at(x).d_index;
+        if(enemies.at(x).d_index >= 9){
+            enemies.at(x).d_index = 0;
+        }
+        enemies.at(x).direction = enemies.at(x).d_list[enemies.at(x).d_index];
+        if(new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] == 'X'){
+               //this means fire hit the player
+               player_dead = true;
+        }
+
+        new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = enemies.at(x).type;
+
+ }
 
 }
 
@@ -183,8 +320,6 @@ int main()
 {
     // need to add mutexes to modifying game matrix
     // asigning values, I suppose this is done allready.
-    int player_x = 0;
-    int player_y = 0;
     char cur ='0';
 
     cur_drawn = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
@@ -214,8 +349,6 @@ int main()
 
 //populate enemy vector
     populate_enemies();
-
-
     //player input loop which writes to the new matrix
     while(1){
         if(enemies.empty()){
@@ -228,138 +361,8 @@ int main()
             level++;
         }
         cur = getch();
-        int temp_score = 0;
-        // Populate enemies, then flying vectors and finally the player before draw to screen
-        // If enemy or enemy projectile touching player end game
-
-for(int x =0; x<enemies.size(); x++){
-        //if enemy on edge of screen
-        if(enemies.at(x).rate != enemies.at(x).clock){
-            enemies.at(x).clock++;
-            continue;
-        }
-        else{
-            enemies.at(x).clock = 0;
-        }
-        if(enemies.at(x).pos_x >= max_board-1 || enemies.at(x).pos_x <= 0 || enemies.at(x).pos_y <= 0 || enemies.at(x).pos_y >= max_board-1){
-            if(enemies.at(x).d_index >= 9){
-                enemies.at(x).d_index = 0;
-            }
-            enemies.at(x).direction = enemies.at(x).d_list[enemies.at(x).d_index];
-            enemies.at(x).d_index++;
-            new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = '0';
-
-            if(enemies.at(x).pos_y >= max_board-1){
-               enemies.at(x).pos_y = 1;
-            }
-            else if(enemies.at(x).pos_x >= max_board-1){
-               enemies.at(x).pos_x = 1;
-            }
-            else if(enemies.at(x).pos_y <= 0){
-               enemies.at(x).pos_y = max_board-2;
-            }
-            else if(enemies.at(x).pos_x <= 0){
-               enemies.at(x).pos_x = max_board-2;
-            }
-            new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = enemies.at(x).type;
-            continue; //this means we are in an invalid location currently means goblin with be stuck
-        }
-
-        new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = '0';
-
-        if(enemies.at(x).direction == 'w'){
-            enemies.at(x).pos_x = enemies.at(x).pos_x;
-            enemies.at(x).pos_y = enemies.at(x).pos_y-1;
-        }
-        else if(enemies.at(x).direction == 'a'){
-            enemies.at(x).pos_x = enemies.at(x).pos_x-1;
-            enemies.at(x).pos_y = enemies.at(x).pos_y;
-        }
-        else if(enemies.at(x).direction == 's'){
-            enemies.at(x).pos_x = enemies.at(x).pos_x;
-            enemies.at(x).pos_y = enemies.at(x).pos_y+1;
-        }
-        else if(enemies.at(x).direction == 'd'){
-            enemies.at(x).pos_x = enemies.at(x).pos_x+1;
-            enemies.at(x).pos_y = enemies.at(x).pos_y;
-        }
-
-        srand (time(NULL));
-        int random;
-        random = rand() % 2 + 1;
-        enemies.at(x).d_index = random + enemies.at(x).d_index;
-        if(enemies.at(x).d_index >= 9){
-            enemies.at(x).d_index = 0;
-        }
-        enemies.at(x).direction = enemies.at(x).d_list[enemies.at(x).d_index];
-        if(new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] == 'X'){
-               //this means fire hit the player
-               player_dead = true;
-        }
-
-        new_matrix[enemies.at(x).pos_y][enemies.at(x).pos_x] = enemies.at(x).type;
-
-}
-
-
-for(int x = 0; x<flying.size(); x++){
-//write out projectiles to screen, if offscreen remove them from vector
-
-    if(flying.at(x).rate == flying.at(x).clock){
-        if(flying.at(x).pos_y != player_y || flying.at(x).pos_x != player_x){
-            new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] ='0';//set old position to 0
-        }
-        if(flying.at(x).direction == 'w'){
-            flying.at(x).pos_x = flying.at(x).pos_x;
-            flying.at(x).pos_y = flying.at(x).pos_y-1;
-        }
-        else if(flying.at(x).direction == 'a'){
-            flying.at(x).pos_x = flying.at(x).pos_x-1;
-            flying.at(x).pos_y = flying.at(x).pos_y;
-        }
-        else if(flying.at(x).direction == 's'){
-            flying.at(x).pos_x = flying.at(x).pos_x;
-            flying.at(x).pos_y = flying.at(x).pos_y+1;
-        }
-        else if(flying.at(x).direction == 'd'){
-            flying.at(x).pos_x = flying.at(x).pos_x+1;
-            flying.at(x).pos_y = flying.at(x).pos_y;
-        }
-
-       if(flying.at(x).pos_x < 0 || flying.at(x).pos_x > max_board-1 || flying.at(x).pos_y < 0 || flying.at(x).pos_y > max_board-1){
-           flying.erase(flying.begin() + x);
-           //x--;
-           continue;
-       }
-
-       if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' && flying.at(x).type != 'F' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' && flying.at(x).type != 'F' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'M' && flying.at(x).type != 'F'){
-               for(int y = 0; y<enemies.size(); y++){
-                   if(enemies.at(y).pos_y == flying.at(x).pos_y && enemies.at(y).pos_x == flying.at(x).pos_x){
-                       enemies.erase(enemies.begin() + y);
-                       temp_score+=100;
-                       break;
-                   }
-               }
-               //find and remove goblin or troll
-               new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = '*';
-               //file tile with empty space
-               flying.erase(flying.begin() + x);
-               //x--;
-               //remove water from projectile vector
-               continue;
-       }
-
-       flying.at(x).clock = 0;//reset projectile clock
-       new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = flying.at(x).type;
-       }
-
-    else{
-        flying.at(x).clock++;
-    }
-}//end of copypaste
-
-
-
+        move_enemies();
+        move_projectiles();
         if(cur == 'w'){
             if(player_y>0){
                 new_matrix[player_y][player_x] = '0';
@@ -434,7 +437,6 @@ for(int x = 0; x<flying.size(); x++){
         }
 
         pthread_mutex_lock(&cur_matrix_mutex);//lock mutex
-        score += temp_score;
 	if(!drawn){
             //give up lock until signaled that drawn has completed
             pthread_cond_wait(&cur_drawn,&cur_matrix_mutex);
