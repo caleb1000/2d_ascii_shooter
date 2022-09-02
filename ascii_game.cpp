@@ -8,6 +8,10 @@
 
 using namespace std;
 
+int const rand_size = 20;
+int rand_array [rand_size] = {3,0,1,0,3,1,0,2,0,1,2,1,2,1,3,3,3,0,2,1};
+int rand_index = 0;
+
 struct enemy{
     int rate;
     int clock;
@@ -51,12 +55,13 @@ bool player_dead = false;
 
 void populate_enemies(){
 
-srand (time(NULL));
-int random;
-
 for(int z = 0; z < 6+(level); z++){
     enemy enemy;
-    random = rand() % 5 + 1;
+    rand_index++;
+    if(rand_index >= rand_size){
+        rand_index = 0;
+    }
+    int random = rand_array[rand_index];
     if(z%2 == 0 && z<9){
         enemy.pos_x = 15+3*z+random;
         enemy.pos_y = 13+2*z-random;
@@ -92,8 +97,8 @@ for(int z = 0; z < 6+(level); z++){
         enemy.d_list[8] = 's';
     }
     else{
-        enemy.pos_x = z+random+random;
-        enemy.pos_y = z+random+random;
+        enemy.pos_x = z+6+random;
+        enemy.pos_y = z+4+random;
         enemy.rate = 2;
         enemy.clock = 0;
         enemy.type = 'M';
@@ -117,6 +122,23 @@ void move_projectiles(){
 
 for(int x = 0; x<flying.size(); x++){
 //write out projectiles to screen, if offscreen remove them from vector
+
+    //first check if an enemy hit your old position (note this should make it easier to hit targets now)
+    if(new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'G' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'T' || new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] == 'M'){
+            for(int y = 0; y<enemies.size(); y++){
+                if(enemies.at(y).pos_y == flying.at(x).pos_y && enemies.at(y).pos_x == flying.at(x).pos_x){
+                    enemies.erase(enemies.begin() + y);
+                    score+=100;
+                    break;
+                 }
+            }
+            //find and remove goblin or troll
+            new_matrix[flying.at(x).pos_y][flying.at(x).pos_x] = '*';
+            //file tile with empty space
+            flying.erase(flying.begin() + x);
+            //remove water from projectile vector
+            continue;
+    }
 
     if(flying.at(x).rate == flying.at(x).clock){
         if(flying.at(x).pos_y != player_y || flying.at(x).pos_x != player_x){
@@ -229,9 +251,12 @@ for(int x =0; x<enemies.size(); x++){
             enemies.at(x).pos_y = enemies.at(x).pos_y;
         }
 
-        srand (time(NULL));
-        int random;
-        random = rand()%4;
+        rand_index++;
+        if(rand_index >= rand_size){
+            rand_index = 0;
+        }
+
+        int random = rand_array[rand_index];
         enemies.at(x).d_index = random + enemies.at(x).d_index;
         if(enemies.at(x).d_index >= 9){
             enemies.at(x).d_index = 0;
@@ -315,54 +340,10 @@ while(1){
    }//while
 }
 
-
-int main()
-{
-    // need to add mutexes to modifying game matrix
-    // asigning values, I suppose this is done allready.
-    char cur ='0';
-
-    cur_drawn = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
-    cur_updated = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
-    //generate blank board for both new and current board
-    for(int x=0;x<max_board;x++)
-    {
-        for(int y=0;y<max_board;y++)
-        {
-            char temp = '0';
-            cur_matrix[x][y]=temp;
-            new_matrix[x][y]=temp;
-        }
-    }
-    new_matrix[player_y][player_x] ='X';//draw player
-
-    pthread_t draw_screen;//thread to draw game screen
-    pthread_attr_t attrs;
-    pthread_attr_init(&attrs);
-    pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);//might want it to be detatched idk
-    pthread_create(&draw_screen, &attrs, draw, NULL);
-
-    initscr();//init curses
-    noecho();//don't print to stdio keystrokes
-    nodelay(stdscr, TRUE);//no delay on getting getch, nonblocking
-    curs_set(0);//make cursor invisable
-
-//populate enemy vector
-    populate_enemies();
-    //player input loop which writes to the new matrix
-    while(1){
-        if(enemies.empty()){
-            score += 1000;
-            new_matrix[player_y][player_x]='0';
-            player_x = 0;
-            player_y = 0;
-            new_matrix[player_y][player_x]='X';
-            populate_enemies();
-            level++;
-        }
+void player_input(){
+        char cur ='0';
         cur = getch();
-        move_enemies();
-        move_projectiles();
+
         if(cur == 'w'){
             if(player_y>0){
                 new_matrix[player_y][player_x] = '0';
@@ -431,11 +412,61 @@ int main()
                 fire.pos_x++;
             }
             if(fire.pos_y < 0 || fire.pos_x < 0 || fire.pos_y > max_board-1 || fire.pos_x > max_board-1){
-            continue;
             }
-            flying.push_back(fire);//we need a mutext to guard this vector
+            else{
+                flying.push_back(fire);
+            }
         }
 
+}
+
+
+int main()
+{
+    // need to add mutexes to modifying game matrix
+    // asigning values, I suppose this is done allready.
+
+    cur_drawn = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+    cur_updated = (pthread_cond_t) PTHREAD_COND_INITIALIZER;
+    //generate blank board for both new and current board
+    for(int x=0;x<max_board;x++)
+    {
+        for(int y=0;y<max_board;y++)
+        {
+            char temp = '0';
+            cur_matrix[x][y]=temp;
+            new_matrix[x][y]=temp;
+        }
+    }
+    new_matrix[player_y][player_x] ='X';//draw player
+
+    pthread_t draw_screen;//thread to draw game screen
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
+    pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_JOINABLE);//might want it to be detatched idk
+    pthread_create(&draw_screen, &attrs, draw, NULL);
+
+    initscr();//init curses
+    noecho();//don't print to stdio keystrokes
+    nodelay(stdscr, TRUE);//no delay on getting getch, nonblocking
+    curs_set(0);//make cursor invisable
+
+//populate enemy vector
+    populate_enemies();
+    //player input loop which writes to the new matrix
+    while(1){
+        if(enemies.empty()){
+            score += 1000;
+            new_matrix[player_y][player_x]='0';
+            player_x = 0;
+            player_y = 0;
+            new_matrix[player_y][player_x]='X';
+            populate_enemies();
+            level++;
+        }
+        move_enemies();//update enemies
+        move_projectiles();//update projectiles
+        player_input();//update player inputs
         pthread_mutex_lock(&cur_matrix_mutex);//lock mutex
 	if(!drawn){
             //give up lock until signaled that drawn has completed
