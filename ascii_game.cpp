@@ -65,7 +65,7 @@ for(int z = 0; z < 6+(level); z++){
     if(z%2 == 0 && z<9){
         enemy.pos_x = 15+3*z+random;
         enemy.pos_y = 13+2*z-random;
-        enemy.rate = 12;
+        enemy.rate = 6;
         enemy.clock = 0;
         enemy.type = 'G';
         enemy.d_index = 0;
@@ -82,7 +82,7 @@ for(int z = 0; z < 6+(level); z++){
     else if (z%2 == 1 && z<9){
         enemy.pos_x = 10+2*z+random;
         enemy.pos_y = 18+z-random;
-        enemy.rate = 16;
+        enemy.rate = 4;
         enemy.clock = 0;
         enemy.type = 'T';
         enemy.d_index = 2;
@@ -93,13 +93,13 @@ for(int z = 0; z < 6+(level); z++){
         enemy.d_list[4] = 'a';
         enemy.d_list[5] = 'd';
         enemy.d_list[6] = 's';
-        enemy.d_list[7] = 's';
-        enemy.d_list[8] = 's';
+        enemy.d_list[7] = 'z';
+        enemy.d_list[8] = 'z';
     }
     else{
         enemy.pos_x = z+6+random;
         enemy.pos_y = z+4+random;
-        enemy.rate = 2;
+        enemy.rate = 1;
         enemy.clock = 0;
         enemy.type = 'M';
         enemy.d_index = 2;
@@ -285,8 +285,13 @@ while(1){
     }
     cout << "\033[2J\033[1;1H";
     printf("Score: %d Level: %d\n\r",score, level);
-    for(int i =0; i<visable_board; i++){
-        printf("-");
+    for(int i =0; i<=visable_board; i++){
+        if(i%2 == 0){
+            cout << "\033[1;31m-\033[0m";
+        }
+        else{
+            cout << "\033[0;36m-\033[0m";
+        }
     }
     printf("\n\r");
     pthread_mutex_lock(&cur_matrix_mutex);//lock mutex
@@ -325,10 +330,16 @@ while(1){
                 cout << "\033[0;33m" << cur_matrix[x][y] << "\033[0m";
             }
         }
-        printf("|\n\r");
+        cout << "\033[1;31m|\033[0m";
+        printf("\n\r");
     }
-    for(int i =0; i<visable_board; i++){
-        printf("-");
+    for(int i =0; i<=visable_board; i++){
+        if(i%2 == 0){
+            cout << "\033[1;31m-\033[0m";
+        }
+        else{
+            cout << "\033[0;36m-\033[0m";
+        }
     }
         printf("\n\r");
         updated = false;//done updating, maybe we only need one conditional but for now this works
